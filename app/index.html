@@ -133,6 +133,7 @@
             background: #ffffff;
             color: var(--text);
             font-size: 1rem;
+            text-align: center;
         }
 
         .form-buttons {
@@ -223,10 +224,69 @@
         }
 
         .strategy-header {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.35rem;
-            width: fit-content;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.3rem;
+            width: 100%;
+        }
+
+        .strategy-query {
+            width: 100%;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.45rem;
+            font-size: 0.85rem;
+            color: var(--muted);
+            position: relative;
+        }
+
+        .strategy-query-label {
+            font-weight: 600;
+            color: var(--muted);
+            flex-shrink: 0;
+        }
+
+        .strategy-query-text {
+            flex: 1;
+            min-width: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            color: var(--muted);
+        }
+
+        .strategy-query-popover {
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: calc(100% + 0.35rem);
+            background: #ffffff;
+            border: 1px solid var(--border);
+            border-radius: 0.75rem;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+            padding: 0.75rem;
+            display: none;
+            z-index: 5;
+            max-height: 12rem;
+            overflow: auto;
+        }
+
+        .strategy-query-popover-label {
+            font-weight: 600;
+            color: var(--muted);
+            margin-bottom: 0.3rem;
+            display: block;
+        }
+
+        .strategy-query-popover-text {
+            word-break: break-all;
+            color: var(--text);
+            font-size: 0.85rem;
+        }
+
+        .strategy-query.show-popover .strategy-query-popover {
+            display: block;
         }
 
         .strategy-title {
@@ -316,25 +376,12 @@
             font-weight: 500;
             transition: color 0.2s ease;
             line-height: 1;
+            flex-shrink: 0;
         }
 
         .copy-button:hover {
             color: var(--accent-dark);
             background: transparent;
-        }
-
-        .copy-feedback {
-            font-size: 0.75rem;
-            color: var(--muted);
-            opacity: 0;
-            transition: opacity 0.2s ease;
-            white-space: nowrap;
-            margin-left: 0;
-        }
-
-        .copy-feedback.visible {
-            opacity: 1;
-            margin-left: 0.35rem;
         }
 
         .copy-icon {
@@ -434,6 +481,21 @@
 
     let manualBusy = false;
     let examplesCache = null;
+    let manualStatusFlashTimer = null;
+    let queryPopoverCounter = 0;
+
+    function flashManualStatus(message, duration = 3000) {
+        manualStatus.textContent = message;
+        if (manualStatusFlashTimer) {
+            clearTimeout(manualStatusFlashTimer);
+        }
+        manualStatusFlashTimer = setTimeout(() => {
+            if (manualStatus.textContent === message) {
+                manualStatus.textContent = '';
+            }
+            manualStatusFlashTimer = null;
+        }, duration);
+    }
 
     manualForm.addEventListener('submit', async (event) => {
         event.preventDefault();
@@ -528,27 +590,45 @@
         const url = new URL('https://api.ror.org/organizations');
         url.searchParams.set('affiliation', affiliation);
         if (isSingleSearch) {
-            url.searchParams.set('single_search', 'true');
+            url.searchParams.set('single_search', '');
         }
-
+        const requestUrl = url.toString();
         const started = performance.now();
-        const response = await fetch(url.toString());
-        const elapsed = performance.now() - started;
-        const payload = await response.json().catch(() => null);
+        let elapsed = 0;
 
-        if (!response.ok) {
-            const message = payload?.message || `Request failed (${response.status})`;
-            const error = new Error(message);
-            error.duration = elapsed;
+        try {
+            const response = await fetch(requestUrl);
+            elapsed = performance.now() - started;
+            const payload = await response.json().catch(() => null);
+
+            if (!response.ok) {
+                const message = payload?.message || `Request failed (${response.status})`;
+                const error = new Error(message);
+                error.duration = elapsed;
+                error.url = requestUrl;
+                throw error;
+            }
+
+            return {
+                payload,
+                duration: elapsed,
+                url: requestUrl,
+                single: isSingleSearch
+            };
+        } catch (error) {
+            if (!elapsed) {
+                elapsed = performance.now() - started;
+            }
+            if (error && typeof error === 'object') {
+                if (typeof error.duration !== 'number') {
+                    error.duration = elapsed;
+                }
+                if (!error.url) {
+                    error.url = requestUrl;
+                }
+            }
             throw error;
         }
-
-        return {
-            payload,
-            duration: elapsed,
-            url: url.toString(),
-            single: isSingleSearch
-        };
     }
 
     function mapSettled(settled) {
@@ -566,7 +646,8 @@
         return {
             ok: false,
             error: settled.reason?.message || 'Request failed.',
-            duration: settled.reason?.duration ?? null
+            duration: settled.reason?.duration ?? null,
+            url: settled.reason?.url || ''
         };
     }
 
@@ -601,7 +682,7 @@
         labelEl.textContent = label;
         header.appendChild(labelEl);
         if (data?.url) {
-            header.appendChild(createCopyButton(data.url));
+            header.appendChild(buildStrategyQuery(data.url));
         }
 
         column.appendChild(header);
@@ -631,6 +712,74 @@
         );
 
         return column;
+    }
+
+    function buildStrategyQuery(url) {
+        const container = document.createElement('div');
+        container.className = 'strategy-query';
+        container.tabIndex = 0;
+
+        const label = document.createElement('span');
+        label.className = 'strategy-query-label';
+        label.textContent = 'Query:';
+        container.appendChild(label);
+
+        const text = document.createElement('span');
+        text.className = 'strategy-query-text';
+        text.textContent = url;
+        container.appendChild(text);
+        container.appendChild(createCopyButton(url));
+
+        const popover = document.createElement('div');
+        popover.className = 'strategy-query-popover';
+        const popoverId = `strategy-query-popover-${queryPopoverCounter++}`;
+        popover.id = popoverId;
+        popover.setAttribute('role', 'tooltip');
+        container.setAttribute('aria-describedby', popoverId);
+        const popLabel = document.createElement('span');
+        popLabel.className = 'strategy-query-popover-label';
+        popLabel.textContent = 'Query';
+        const popText = document.createElement('div');
+        popText.className = 'strategy-query-popover-text';
+        popText.textContent = url;
+        popover.appendChild(popLabel);
+        popover.appendChild(popText);
+        container.appendChild(popover);
+
+        let hoverTimer = null;
+
+        function showPopover() {
+            if (hoverTimer) {
+                clearTimeout(hoverTimer);
+                hoverTimer = null;
+            }
+            container.classList.add('show-popover');
+        }
+
+        function schedulePopover() {
+            if (hoverTimer) {
+                clearTimeout(hoverTimer);
+            }
+            hoverTimer = setTimeout(() => {
+                hoverTimer = null;
+                container.classList.add('show-popover');
+            }, 300);
+        }
+
+        function hidePopover() {
+            if (hoverTimer) {
+                clearTimeout(hoverTimer);
+                hoverTimer = null;
+            }
+            container.classList.remove('show-popover');
+        }
+
+        container.addEventListener('mouseenter', schedulePopover);
+        container.addEventListener('mouseleave', hidePopover);
+        container.addEventListener('focusin', showPopover);
+        container.addEventListener('focusout', hidePopover);
+
+        return container;
     }
 
     function buildResultHighlight(item, duration) {
@@ -703,24 +852,6 @@
                 <path d="M6 15H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v1"></path>
             </svg>
         `;
-        const feedback = document.createElement('span');
-        feedback.className = 'copy-feedback';
-        feedback.setAttribute('aria-live', 'polite');
-        button.appendChild(feedback);
-        let feedbackTimer = null;
-
-        function showFeedback(message) {
-            feedback.textContent = message;
-            feedback.classList.add('visible');
-            if (feedbackTimer) {
-                clearTimeout(feedbackTimer);
-            }
-            feedbackTimer = setTimeout(() => {
-                feedback.classList.remove('visible');
-                feedback.textContent = '';
-            }, 3000);
-        }
-
         button.addEventListener('click', async (event) => {
             event.stopPropagation();
             if (!url) {
@@ -728,9 +859,9 @@
             }
             try {
                 await navigator.clipboard.writeText(url);
-                showFeedback('API request URL copied to clipboard.');
+                flashManualStatus('API request URL copied to clipboard.');
             } catch (error) {
-                showFeedback('Unable to copy the API request URL.');
+                flashManualStatus('Unable to copy the API request URL.');
                 console.error(error);
             }
         });
