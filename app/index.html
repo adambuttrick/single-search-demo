@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <title>ROR Affiliation Comparison</title>
+    <style>
+        :root {
+            color-scheme: light;
+            font-family: "Atkinson Hyperlegible", "Inter", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+            --bg: #ffffff;
+            --panel: transparent;
+            --border: #e4e8eb;
+            --muted: #5b6367;
+            --text: #1f1f24;
+            --accent: #2f9f91;
+            --accent-dark: #1d736b;
+            --neutral-chip: #e3f1ee;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background: var(--bg);
+            color: var(--text);
+        }
+
+        main {
+            width: min(1100px, 100%);
+            padding: 3rem clamp(1rem, 4vw, 3rem) 4rem;
+            margin: 0 auto;
+        }
+
+        h1,
+        h2,
+        h3 {
+            margin: 0;
+            font-weight: 500;
+        }
+
+        p {
+            margin: 0;
+        }
+
+        .hero {
+            margin-bottom: 2.5rem;
+            text-align: center;
+        }
+
+        .hero-header {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+            text-align: center;
+        }
+
+        .hero-logo {
+            height: clamp(1.8rem, 4vw, 2.3rem);
+            width: auto;
+            display: block;
+        }
+
+        .hero h1 {
+            font-size: clamp(1.8rem, 4vw, 2.4rem);
+            letter-spacing: 0.02em;
+            text-transform: none;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .panel {
+            background: var(--panel);
+            border: none;
+            border-radius: 0;
+            padding: 0;
+            margin-bottom: 2rem;
+        }
+
+        .panel h2 {
+            font-size: 1.2rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--muted);
+        }
+
+        .panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+        }
+
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            border: 0;
+        }
+
+        form {
+            margin-top: 1.25rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .input-row {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            width: 100%;
+            padding: 0.9rem 1.1rem;
+            border-radius: 999px;
+            border: 1px solid var(--border);
+            background: #ffffff;
+            color: var(--text);
+            font-size: 1rem;
+        }
+
+        .form-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 0.75rem;
+        }
+
+        .action-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid var(--border);
+            background: #ffffff;
+            color: var(--text);
+            padding: 0.6rem 1.2rem;
+            border-radius: 18px;
+            text-transform: none;
+            letter-spacing: 0.08em;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s ease, color 0.2s ease, border 0.2s ease;
+        }
+
+        .action-button.primary {
+            border-color: var(--accent);
+            background: var(--accent);
+            color: #fdfdfd;
+        }
+
+        .action-button:hover {
+            border-color: var(--accent-dark);
+            color: var(--accent-dark);
+        }
+
+        .action-button.primary:hover {
+            background: var(--accent-dark);
+            border-color: var(--accent-dark);
+            color: #fdfdfd;
+        }
+
+        .action-button[disabled] {
+            opacity: 0.7;
+            cursor: not-allowed;
+            background: var(--border);
+            border-color: var(--border);
+            color: var(--muted);
+        }
+
+        .status-line {
+            margin-top: 1rem;
+            min-height: 1.5rem;
+            color: var(--muted);
+            font-size: 0.95rem;
+            text-align: center;
+            width: 100%;
+        }
+
+        .comparison-grid {
+            display: grid;
+            column-gap: 2.5rem;
+            row-gap: 1.25rem;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            margin-top: 1.25rem;
+            position: relative;
+        }
+
+        .comparison-grid::before {
+            content: '';
+            position: absolute;
+            top: 0.5rem;
+            bottom: 0.5rem;
+            width: 1px;
+            background: var(--border);
+            left: 50%;
+            transform: translateX(-50%);
+            pointer-events: none;
+        }
+
+        .strategy-card {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            background: transparent;
+            border: none;
+            padding: 0.5rem 0 1.25rem;
+        }
+
+        .strategy-header {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            width: fit-content;
+        }
+
+        .strategy-title {
+            font-size: 1.15rem;
+            font-weight: 700;
+            letter-spacing: 0.03em;
+            color: var(--text);
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            color: var(--muted);
+        }
+
+        .result-highlight {
+            border: 1px solid var(--border);
+            border-radius: 1rem;
+            padding: 0.9rem 1rem;
+            background: var(--neutral-chip);
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem;
+            position: relative;
+        }
+
+        .result-highlight.no-result {
+            border-style: dotted;
+            background: transparent;
+            color: var(--muted);
+        }
+
+        .result-highlight strong {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.2rem;
+        }
+
+        .result-highlight.no-result strong {
+            color: #e0004d;
+        }
+
+        .result-organization {
+            margin: 0;
+            font-weight: 600;
+            font-size: 1rem;
+            color: var(--text);
+        }
+
+        .result-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.6rem;
+            font-size: 0.85rem;
+            color: var(--muted);
+            word-break: break-word;
+        }
+
+        .result-meta a {
+            color: var(--accent-dark);
+            text-decoration: none;
+            word-break: break-all;
+        }
+
+        .result-meta a:hover {
+            text-decoration: underline;
+        }
+
+        .duration-chip {
+            margin-left: auto;
+            font-weight: 600;
+        }
+
+        .copy-button {
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            color: var(--muted);
+            padding: 0.05rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 0;
+            text-transform: none;
+            letter-spacing: normal;
+            font-weight: 500;
+            transition: color 0.2s ease;
+            line-height: 1;
+        }
+
+        .copy-button:hover {
+            color: var(--accent-dark);
+            background: transparent;
+        }
+
+        .copy-feedback {
+            font-size: 0.75rem;
+            color: var(--muted);
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            white-space: nowrap;
+            margin-left: 0;
+        }
+
+        .copy-feedback.visible {
+            opacity: 1;
+            margin-left: 0.35rem;
+        }
+
+        .copy-icon {
+            width: 1rem;
+            height: 1rem;
+            display: block;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 1.8;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .muted {
+            color: var(--muted);
+        }
+
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            padding: 0.25rem 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            font-size: 0.7rem;
+            color: var(--muted);
+        }
+
+        .pill.ok {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .pill.miss {
+            border-color: var(--muted);
+            color: var(--muted);
+        }
+
+        .empty-state {
+            border: 1px dashed var(--border);
+            border-radius: 14px;
+            padding: 1.5rem;
+            text-align: center;
+            color: var(--muted);
+        }
+
+        @media (max-width: 640px) {
+            .panel-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .form-buttons {
+                flex-direction: column;
+            }
+            .comparison-grid::before {
+                content: none;
+            }
+        }
+    </style>
+</head>
+<body>
+<main>
+    <section class="hero">
+        <div class="hero-header">
+            <img src="ROR.org_Land_RGB_WhiteBack.svg" alt="ROR logo" class="hero-logo">
+            <h1>Single Search Demo</h1>
+        </div>
+    </section>
+
+    <section class="panel" id="manual-panel" aria-labelledby="manual-heading">
+        <div class="panel-header">
+            <h2 id="manual-heading" class="sr-only">Manual lookup</h2>
+        </div>
+        <form id="manual-form">
+            <div class="input-row">
+                <input type="text" id="affiliation-input" placeholder="Paste or type an affiliation string" autocomplete="off" required>
+            </div>
+            <div class="form-buttons">
+                <button type="button" id="example-button" class="action-button">Example</button>
+                <button type="submit" id="manual-submit" class="action-button primary">Match</button>
+            </div>
+        </form>
+        <div class="status-line" id="manual-status"></div>
+        <div class="comparison-grid" id="manual-output"></div>
+    </section>
+</main>
+
+<script>
+    const examplesPath = 'examples.json';
+    const manualForm = document.getElementById('manual-form');
+    const manualInput = document.getElementById('affiliation-input');
+    const manualStatus = document.getElementById('manual-status');
+    const manualOutput = document.getElementById('manual-output');
+    const manualSubmit = document.getElementById('manual-submit');
+    const exampleButton = document.getElementById('example-button');
+
+    let manualBusy = false;
+    let examplesCache = null;
+
+    manualForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const affiliation = manualInput.value.trim();
+        if (!affiliation) {
+            manualStatus.textContent = 'Please enter an affiliation string.';
+            return;
+        }
+        await runManualLookup(affiliation);
+    });
+
+    exampleButton.addEventListener('click', async () => {
+        if (manualBusy) {
+            manualStatus.textContent = 'Please wait for the current comparison to finish.';
+            return;
+        }
+        manualStatus.textContent = 'Selecting a random example...';
+        try {
+            const examples = await loadExamples();
+            const pick = pickRandomExample(examples);
+            manualInput.value = pick;
+            await runManualLookup(pick, 'Processing random example...');
+        } catch (error) {
+            manualStatus.textContent = error.message || 'Unable to load example.';
+            renderManualPlaceholder('Unable to load example.');
+        }
+    });
+
+    async function loadExamples() {
+        if (examplesCache) {
+            return examplesCache;
+        }
+        const response = await fetch(examplesPath);
+        if (!response.ok) {
+            throw new Error('Unable to load example dataset.');
+        }
+        const payload = await response.json();
+        if (!Array.isArray(payload) || !payload.length) {
+            throw new Error('Example dataset is empty.');
+        }
+        examplesCache = payload;
+        return examplesCache;
+    }
+
+    function pickRandomExample(collection) {
+        if (!Array.isArray(collection) || !collection.length) {
+            throw new Error('No examples available.');
+        }
+        const index = Math.floor(Math.random() * collection.length);
+        return collection[index];
+    }
+
+    async function runManualLookup(affiliation, inProgressMessage = 'Processing...') {
+        if (manualBusy) {
+            manualStatus.textContent = 'Please wait for the current comparison to finish.';
+            return;
+        }
+        manualBusy = true;
+        manualSubmit.disabled = true;
+        exampleButton.disabled = true;
+        manualStatus.textContent = inProgressMessage;
+
+        try {
+            const comparison = await runComparison(affiliation);
+            renderManualResult(comparison);
+            manualStatus.textContent = '';
+        } catch (error) {
+            manualStatus.textContent = error.message || 'Unable to run comparison.';
+            renderManualPlaceholder('Error retrieving data.');
+        } finally {
+            manualSubmit.disabled = false;
+            exampleButton.disabled = false;
+            manualBusy = false;
+        }
+    }
+
+    async function runComparison(affiliation, expectedIds = []) {
+        const [multi, single] = await Promise.allSettled([
+            queryROR(affiliation, false),
+            queryROR(affiliation, true)
+        ]);
+
+        return {
+            affiliation,
+            expectedIds,
+            multi: mapSettled(multi),
+            single: mapSettled(single)
+        };
+    }
+
+    async function queryROR(affiliation, isSingleSearch) {
+        const url = new URL('https://api.ror.org/organizations');
+        url.searchParams.set('affiliation', affiliation);
+        if (isSingleSearch) {
+            url.searchParams.set('single_search', 'true');
+        }
+
+        const started = performance.now();
+        const response = await fetch(url.toString());
+        const elapsed = performance.now() - started;
+        const payload = await response.json().catch(() => null);
+
+        if (!response.ok) {
+            const message = payload?.message || `Request failed (${response.status})`;
+            const error = new Error(message);
+            error.duration = elapsed;
+            throw error;
+        }
+
+        return {
+            payload,
+            duration: elapsed,
+            url: url.toString(),
+            single: isSingleSearch
+        };
+    }
+
+    function mapSettled(settled) {
+        if (settled.status === 'fulfilled') {
+            const items = Array.isArray(settled.value?.payload?.items) ? settled.value.payload.items : [];
+            const chosen = items.find((item) => item?.chosen) || null;
+            return {
+                ok: true,
+                items,
+                chosen,
+                duration: settled.value?.duration ?? null,
+                url: settled.value?.url
+            };
+        }
+        return {
+            ok: false,
+            error: settled.reason?.message || 'Request failed.',
+            duration: settled.reason?.duration ?? null
+        };
+    }
+
+    function renderManualPlaceholder(message) {
+        manualOutput.innerHTML = `<div class="empty-state">${message}</div>`;
+    }
+
+    function renderManualResult(comparison) {
+        manualOutput.innerHTML = '';
+        const strategies = [
+            { label: 'Multisearch', data: comparison.multi },
+            { label: 'Single Search', data: comparison.single }
+        ];
+
+        const presenter = document.createElement('div');
+        presenter.className = 'comparison-grid';
+
+        strategies.forEach((strategy) => {
+            presenter.appendChild(buildStrategyColumn(strategy.label, strategy.data));
+        });
+
+        manualOutput.appendChild(presenter);
+    }
+
+    function buildStrategyColumn(label, data, expectedIds = []) {
+        const column = document.createElement('div');
+        column.className = 'strategy-card';
+        const header = document.createElement('header');
+        header.className = 'strategy-header';
+        const labelEl = document.createElement('span');
+        labelEl.className = 'strategy-title';
+        labelEl.textContent = label;
+        header.appendChild(labelEl);
+        if (data?.url) {
+            header.appendChild(createCopyButton(data.url));
+        }
+
+        column.appendChild(header);
+
+        if (!data.ok) {
+            const errorMessage = document.createElement('p');
+            errorMessage.className = 'muted';
+            errorMessage.textContent = data.error || 'Unknown error.';
+            column.appendChild(errorMessage);
+            return column;
+        }
+
+        if (expectedIds?.length) {
+            const badge = document.createElement('span');
+            const isMatch = isExpectedMatch(data.chosen, expectedIds);
+            badge.className = `pill ${isMatch ? 'ok' : 'miss'}`;
+            badge.textContent = data.chosen
+                ? (isMatch ? 'Matches expected ROR' : 'Does not match expected')
+                : 'No match for this strategy';
+            column.appendChild(badge);
+        }
+
+        column.appendChild(
+            data.chosen
+                ? buildResultHighlight(data.chosen, data.duration)
+                : buildNoResultHighlight(data.duration)
+        );
+
+        return column;
+    }
+
+    function buildResultHighlight(item, duration) {
+        const block = document.createElement('div');
+        block.className = 'result-highlight match';
+        const status = document.createElement('strong');
+        status.textContent = 'Match found';
+        block.appendChild(status);
+        const orgLine = document.createElement('p');
+        orgLine.className = 'result-organization';
+        orgLine.textContent = getOrganizationName(item);
+        block.appendChild(orgLine);
+
+        const meta = document.createElement('div');
+        meta.className = 'result-meta';
+        const rorId = getOrganizationId(item);
+        if (rorId) {
+            const link = document.createElement('a');
+            link.href = rorId;
+            link.target = '_blank';
+            link.rel = 'noopener noreferrer';
+            link.textContent = rorId;
+            link.style.fontWeight = '600';
+            meta.appendChild(link);
+        } else {
+            const span = document.createElement('span');
+            span.textContent = 'No ROR ID';
+            meta.appendChild(span);
+        }
+
+        const durationSpan = document.createElement('span');
+        durationSpan.className = 'duration-chip';
+        durationSpan.textContent = `Response time: ${formatDuration(duration)}`;
+        meta.appendChild(durationSpan);
+
+        block.appendChild(meta);
+        return block;
+    }
+
+    function buildNoResultHighlight(duration) {
+        const block = document.createElement('div');
+        block.className = 'result-highlight no-result';
+        const title = document.createElement('strong');
+        title.textContent = 'No match found';
+        block.appendChild(title);
+        const note = document.createElement('p');
+        note.className = 'muted';
+        note.textContent = 'The API did not return a match for this strategy.';
+        block.appendChild(note);
+
+        const meta = document.createElement('div');
+        meta.className = 'result-meta';
+        const durationSpan = document.createElement('span');
+        durationSpan.className = 'duration-chip';
+        durationSpan.textContent = `Response time: ${formatDuration(duration)}`;
+        meta.appendChild(durationSpan);
+        block.appendChild(meta);
+        return block;
+    }
+
+    function createCopyButton(url) {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'copy-button';
+        button.title = 'Copy API request URL';
+        button.setAttribute('aria-label', 'Copy API request URL');
+        button.innerHTML = `
+            <svg class="copy-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <rect x="9" y="9" width="12" height="12" rx="2"></rect>
+                <path d="M6 15H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v1"></path>
+            </svg>
+        `;
+        const feedback = document.createElement('span');
+        feedback.className = 'copy-feedback';
+        feedback.setAttribute('aria-live', 'polite');
+        button.appendChild(feedback);
+        let feedbackTimer = null;
+
+        function showFeedback(message) {
+            feedback.textContent = message;
+            feedback.classList.add('visible');
+            if (feedbackTimer) {
+                clearTimeout(feedbackTimer);
+            }
+            feedbackTimer = setTimeout(() => {
+                feedback.classList.remove('visible');
+                feedback.textContent = '';
+            }, 3000);
+        }
+
+        button.addEventListener('click', async (event) => {
+            event.stopPropagation();
+            if (!url) {
+                return;
+            }
+            try {
+                await navigator.clipboard.writeText(url);
+                showFeedback('API request URL copied to clipboard.');
+            } catch (error) {
+                showFeedback('Unable to copy the API request URL.');
+                console.error(error);
+            }
+        });
+        return button;
+    }
+
+    function getOrganizationName(item) {
+        const org = item?.organization;
+        if (!org) {
+            return 'Unknown organization';
+        }
+        if (org.name) {
+            return org.name;
+        }
+        const names = Array.isArray(org.names) ? org.names : [];
+        const preferred = names.find((entry) => entry?.types?.includes('ror_display'));
+        if (preferred?.value) {
+            return preferred.value;
+        }
+        if (names[0]?.value) {
+            return names[0].value;
+        }
+        return org.label || 'Unknown organization';
+    }
+
+    function getOrganizationId(item) {
+        return item?.organization?.id || '';
+    }
+
+    function formatMatchingType(value) {
+        if (!value) {
+            return '';
+        }
+        const lower = value.toLowerCase();
+        return lower.charAt(0).toUpperCase() + lower.slice(1);
+    }
+
+    function isExpectedMatch(chosen, expectedIds = []) {
+        if (!chosen || !expectedIds?.length) {
+            return false;
+        }
+        const actual = (getOrganizationId(chosen) || '').toLowerCase();
+        return expectedIds.some((id) => (id || '').toLowerCase() === actual);
+    }
+
+    function formatDuration(value) {
+        if (typeof value !== 'number' || Number.isNaN(value)) {
+            return '—';
+        }
+        return `${Math.round(value)} ms`;
+    }
+
+</script>
+</body>
+</html>
