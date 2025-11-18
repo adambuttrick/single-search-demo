@@ -587,12 +587,13 @@
     }
 
     async function queryROR(affiliation, isSingleSearch) {
-        const url = new URL('https://api.ror.org/organizations');
-        url.searchParams.set('affiliation', affiliation);
+        const baseUrl = 'https://api.ror.org/organizations';
+        const params = new URLSearchParams();
+        params.set('affiliation', affiliation);
+        let requestUrl = `${baseUrl}?${params.toString()}`;
         if (isSingleSearch) {
-            url.searchParams.set('single_search', '');
+            requestUrl += '&single_search';
         }
-        const requestUrl = url.toString();
         const started = performance.now();
         let elapsed = 0;
 
